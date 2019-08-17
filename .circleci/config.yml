@@ -33,13 +33,13 @@ jobs:
             - <<: *cargo-cache-save
 
     deploy:
-        docker:
-            - image: circleci/rust:latest-node
+        machine: true
+        #docker:
+        #    - image: circleci/rust:latest-node
 
         steps:
             - checkout
-            - <<: *cargo-cache-restore
-            - setup_remote_docker
+            #- setup_remote_docker
             - run:
                 name: Deploy function
                 command: |
