@@ -1,28 +1,57 @@
-version: 2.0
+version: 2.1
 
 aliases:
     - &cargo-cache-key-base cargo-packages-v1-{{ arch }}-
     - &cargo-cache-key cargo-packages-v1-{{ arch }}-{{ checksum "Cargo.lock" }}
+
     - &cargo-cache-restore
         restore_cache:
             keys:
                 - *cargo-cache-key
                 - *cargo-cache-key-base
+
     - &cargo-cache-save
         save_cache:
             key: *cargo-cache-key
             paths:
                 - "~/.cargo"
                 - "./target"
+
 jobs:
     build:
         docker:
-            - image: circleci/rust:latest-node
+            - image: circleci/rust:latest
+
         steps:
             - checkout
             - <<: *cargo-cache-restore
             - run:
-                name: Test
+                name: Run tests
                 command: |
+                    cargo check
                     cargo test
             - <<: *cargo-cache-save
+
+    deploy:
+        docker:
+            - image: circleci/rust:latest-node
+
+        steps:
+            - checkout
+            - <<: *cargo-cache-restore
+            - setup_remote_docker
+            - run:
+                name: Deploy function
+                command: |
+                    npm i -D serverless-rust
+                    npx serverless deploy
+
+workflows:
+    version: 2
+
+    build:
+        jobs:
+            - build
+            - deploy:
+                requires:
+                    - build
