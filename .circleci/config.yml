@@ -1,0 +1,28 @@
+version: 2.0
+
+aliases:
+    - &cargo-cache-key-base cargo-packages-v1-{{ arch }}-
+    - &cargo-cache-key cargo-packages-v1-{{ arch }}-{{ checksum "Cargo.lock" }}
+    - &cargo-cache-restore
+        restore_cache:
+            keys:
+                - *cargo-cache-key
+                - *cargo-cache-key-base
+    - &cargo-cache-save
+        save_cache:
+            key: *cargo-cache-key
+            paths:
+                - "~/.cargo"
+                - "./target"
+jobs:
+    build:
+        docker:
+            - image: circleci/rust:latest-node
+        steps:
+            - checkout
+            - <<: *cargo-cache-restore
+            - run:
+                name: Test
+                command: |
+                    cargo test
+            - <<: *cargo-cache-save
